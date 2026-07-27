@@ -57,6 +57,11 @@ for provider in providers:
 
         payload = data.get("payload", [])
 
+        print("Payload count:", len(payload))
+        print("First rules:")
+        for r in payload[:20]:
+            print(r)       
+
         yaml_source = f"{SOURCE_DIR}/{name}_mihomo.yaml"
 
         with open(yaml_source, "w", encoding="utf-8") as f:
