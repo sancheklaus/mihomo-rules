@@ -32,6 +32,9 @@ jobs:
         gunzip mihomo.gz
         chmod +x mihomo
 
+    - name: Install python deps
+      run: |
+        pip3 install pyyaml
 
     - name: Build
       run: |
