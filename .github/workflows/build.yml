@@ -2,6 +2,13 @@ name: Build Mihomo Rules
 
 on:
   workflow_dispatch:
+
+  push:
+    paths:
+      - "sources/**"
+      - "scripts/**"
+      - ".github/workflows/**"
+
   schedule:
     - cron: "0 3 * * *"
 
