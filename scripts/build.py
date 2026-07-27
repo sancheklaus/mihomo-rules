@@ -39,21 +39,27 @@ for p in providers:
 
 
     # обработка yaml от Blackmatrix7
-    if fmt == "yaml":
+if fmt == "yaml":
 
-        with open(source, encoding="utf-8") as f:
-            data = yaml.safe_load(f)
+    with open(source, encoding="utf-8") as f:
+        data = yaml.safe_load(f)
 
-        payload = data.get("payload", [])
+    payload = data.get("payload", [])
 
-        txt_source = f"{SOURCE_DIR}/{name}.txt"
+    txt_source = f"{SOURCE_DIR}/{name}.txt"
 
-        with open(txt_source, "w", encoding="utf-8") as f:
-            for rule in payload:
+    with open(txt_source, "w", encoding="utf-8") as f:
+        for rule in payload:
+            if rule.startswith("DOMAIN,"):
                 f.write(rule + "\n")
 
-        source = txt_source
-        fmt = "text"
+            elif rule.startswith("DOMAIN-SUFFIX,"):
+                f.write(rule + "\n")
+
+            elif rule.startswith("DOMAIN-KEYWORD,"):
+                f.write(rule + "\n")
+
+    source = txt_source
 
     print(f"Build {name}.mrs")
 
@@ -62,8 +68,8 @@ for p in providers:
         [
             MIHOMO,
             "convert-ruleset",
-            behavior,
-            fmt,
+            "classical",
+            "text",
             source,
             target
         ],
