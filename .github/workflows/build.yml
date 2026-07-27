@@ -4,47 +4,40 @@ on:
   workflow_dispatch:
   schedule:
     - cron: "0 3 * * *"
-  push:
-    paths:
-      - "sources/**"
 
 permissions:
   contents: write
 
 jobs:
+
   build:
+
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
 
-      - name: Download Mihomo
-        run: |
-          wget -O mihomo.gz https://github.com/MetaCubeX/mihomo/releases/latest/download/mihomo-linux-amd64.gz
-          gunzip mihomo.gz
-          chmod +x mihomo
+    - uses: actions/checkout@v4
 
-      - name: Build MRS rules
-        run: |
-          mkdir -p ruleset
 
-          for file in sources/*.txt; do
-            name=$(basename "$file" .txt)
-            echo "Building $name.mrs"
-            ./mihomo convert-ruleset domain text "$file" "ruleset/$name.mrs"
-          done
+    - name: Download Mihomo
+      run: |
+        wget -O mihomo.gz https://github.com/MetaCubeX/mihomo/releases/latest/download/mihomo-linux-amd64.gz
+        gunzip mihomo.gz
+        chmod +x mihomo
 
-      - name: Commit changes
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          git add ruleset/*.mrs
+    - name: Build
+      run: |
+        python3 scripts/build.py
 
-          if git diff --cached --quiet; then
-            echo "Nothing to commit."
-          else
-            git commit -m "Auto update mrs rules"
-            git push
-          fi
+
+    - name: Commit
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+        git add ruleset
+
+        git commit -m "Update mihomo rules" || exit 0
+
+        git push
