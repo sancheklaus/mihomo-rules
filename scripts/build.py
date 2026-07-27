@@ -2,12 +2,13 @@ import json
 import os
 import subprocess
 import urllib.request
+import yaml
 
 
 MIHOMO = "./mihomo"
+
 SOURCE_DIR = "sources"
 RULESET_DIR = "ruleset"
-
 
 os.makedirs(SOURCE_DIR, exist_ok=True)
 os.makedirs(RULESET_DIR, exist_ok=True)
@@ -37,6 +38,23 @@ for p in providers:
     )
 
 
+    # обработка yaml от Blackmatrix7
+    if fmt == "yaml":
+
+        with open(source, encoding="utf-8") as f:
+            data = yaml.safe_load(f)
+
+        payload = data.get("payload", [])
+
+        txt_source = f"{SOURCE_DIR}/{name}.txt"
+
+        with open(txt_source, "w", encoding="utf-8") as f:
+            for rule in payload:
+                f.write(rule + "\n")
+
+        source = txt_source
+        fmt = "text"
+
     print(f"Build {name}.mrs")
 
 
@@ -53,4 +71,6 @@ for p in providers:
     )
 
 
-print("DONE")
+print("Generated:")
+for f in os.listdir(RULESET_DIR):
+    print(f)
