@@ -10,11 +10,15 @@ MIHOMO = "./mihomo"
 SOURCE_DIR = "sources"
 RULESET_DIR = "ruleset"
 
+
 os.makedirs(SOURCE_DIR, exist_ok=True)
 os.makedirs(RULESET_DIR, exist_ok=True)
 
 
-with open("sources/providers.json", encoding="utf-8") as f:
+with open(
+    "sources/providers.json",
+    encoding="utf-8"
+) as f:
     providers = json.load(f)
 
 
@@ -25,7 +29,12 @@ for provider in providers:
     fmt = provider["format"]
     url = provider["url"]
 
-    print(f"\n=== {name} ===")
+
+    print("")
+    print("======================")
+    print(name)
+    print("======================")
+
 
     source_ext = "yaml" if fmt == "yaml" else "txt"
 
@@ -33,7 +42,9 @@ for provider in providers:
     target = f"{RULESET_DIR}/{name}.mrs"
 
 
-    print(f"Download: {url}")
+    print("Download:")
+    print(url)
+
 
     urllib.request.urlretrieve(
         url,
@@ -41,61 +52,104 @@ for provider in providers:
     )
 
 
-    convert_source = source
+    convert_behavior = behavior
     convert_format = fmt
+    convert_source = source
 
 
     #
-    # Blackmatrix7 YAML
+    # Blackmatrix7 Clash YAML
     #
     if behavior == "classical" and fmt == "yaml":
 
-        print("Process classical yaml")
+        print("Convert classical yaml -> domain text")
 
-        with open(source, encoding="utf-8") as f:
+
+        with open(
+            source,
+            encoding="utf-8"
+        ) as f:
             data = yaml.safe_load(f)
 
-        payload = data.get("payload", [])
 
-        print("Payload count:", len(payload))
-        print("First rules:")
-        for r in payload[:20]:
-            print(r)       
+        payload = data.get(
+            "payload",
+            []
+        )
 
-        yaml_source = f"{SOURCE_DIR}/{name}_mihomo.yaml"
 
-        with open(yaml_source, "w", encoding="utf-8") as f:
-            yaml.dump(
-                {
-                    "payload": payload
-                },
-                f,
-                allow_unicode=True,
-                sort_keys=False
-            )
+        txt_source = (
+            f"{SOURCE_DIR}/{name}_domain.txt"
+        )
 
-        convert_source = yaml_source
-        convert_format = "yaml"
+
+        with open(
+            txt_source,
+            "w",
+            encoding="utf-8"
+        ) as f:
+
+            for rule in payload:
+
+                if not isinstance(rule, str):
+                    continue
+
+
+                if rule.startswith(
+                    "DOMAIN-SUFFIX,"
+                ):
+
+                    domain = rule.split(
+                        ",",
+                        1
+                    )[1]
+
+                    f.write(
+                        domain + "\n"
+                    )
+
+
+                elif rule.startswith(
+                    "DOMAIN,"
+                ):
+
+                    domain = rule.split(
+                        ",",
+                        1
+                    )[1]
+
+                    f.write(
+                        domain + "\n"
+                    )
+
+
+        convert_behavior = "domain"
+        convert_format = "text"
+        convert_source = txt_source
 
 
     #
-    # domain text
+    # Direct domain list
     #
-    elif behavior == "domain" and fmt == "text":
+    elif behavior == "domain":
 
-        print("Process domain text")
+        print(
+            "Convert domain text"
+        )
 
 
     #
-    # ipcidr text
+    # Direct IP list
     #
-    elif behavior == "ipcidr" and fmt == "text":
+    elif behavior == "ipcidr":
 
-        print("Process ipcidr text")
+        print(
+            "Convert ipcidr text"
+        )
 
 
     print(
-        f"Convert {name}.mrs"
+        f"Build {name}.mrs"
     )
 
 
@@ -103,7 +157,7 @@ for provider in providers:
         [
             MIHOMO,
             "convert-ruleset",
-            behavior,
+            convert_behavior,
             convert_format,
             convert_source,
             target
@@ -112,11 +166,18 @@ for provider in providers:
     )
 
 
-print("\nGenerated rules:")
+print("")
+print("Generated rules:")
 
-for file in sorted(os.listdir(RULESET_DIR)):
+
+for file in sorted(
+    os.listdir(RULESET_DIR)
+):
+
     if file.endswith(".mrs"):
+
         print(file)
 
 
-print("\nDONE")
+print("")
+print("DONE")
