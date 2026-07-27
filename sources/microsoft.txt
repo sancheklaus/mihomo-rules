@@ -1,0 +1,6 @@
+microsoft.com
+live.com
+office.com
+office365.com
+windows.com
+msftconnecttest.com

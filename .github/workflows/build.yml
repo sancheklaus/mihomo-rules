@@ -4,44 +4,47 @@ on:
   workflow_dispatch:
   schedule:
     - cron: "0 3 * * *"
+  push:
+    paths:
+      - "sources/**"
 
 permissions:
   contents: write
 
 jobs:
-  test:
+  build:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Show repository structure
+      - name: Download Mihomo
         run: |
-          echo "Repository is ready."
-          pwd
-          ls -la
+          wget -O mihomo.gz https://github.com/MetaCubeX/mihomo/releases/latest/download/mihomo-linux-amd64.gz
+          gunzip mihomo.gz
+          chmod +x mihomo
 
-      - name: Create directories
+      - name: Build MRS rules
         run: |
           mkdir -p ruleset
-          mkdir -p sources
-          mkdir -p scripts
 
-      - name: Create test file
-        run: |
-          echo "GitHub Actions works!" > ruleset/test.txt
+          for file in sources/*.txt; do
+            name=$(basename "$file" .txt)
+            echo "Building $name.mrs"
+            ./mihomo convert-ruleset domain text "$file" "ruleset/$name.mrs"
+          done
 
       - name: Commit changes
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          git add .
+          git add ruleset/*.mrs
 
           if git diff --cached --quiet; then
             echo "Nothing to commit."
           else
-            git commit -m "Auto update test file"
+            git commit -m "Auto update mrs rules"
             git push
           fi
