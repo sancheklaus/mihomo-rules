@@ -48,40 +48,29 @@ for provider in providers:
     #
     # Blackmatrix7 YAML
     #
-    if behavior == "classical" and fmt == "yaml":
+if behavior == "classical" and fmt == "yaml":
 
-        print("Process classical yaml")
+    print("Process classical yaml")
 
-        with open(source, encoding="utf-8") as f:
-            data = yaml.safe_load(f)
+    with open(source, encoding="utf-8") as f:
+        data = yaml.safe_load(f)
 
+    payload = data.get("payload", [])
 
-        payload = data.get("payload", [])
+    yaml_source = f"{SOURCE_DIR}/{name}_mihomo.yaml"
 
+    with open(yaml_source, "w", encoding="utf-8") as f:
+        yaml.dump(
+            {
+                "payload": payload
+            },
+            f,
+            allow_unicode=True,
+            sort_keys=False
+        )
 
-        txt_source = f"{SOURCE_DIR}/{name}.txt"
-
-
-        with open(txt_source, "w", encoding="utf-8") as f:
-
-            for rule in payload:
-
-                if not isinstance(rule, str):
-                    continue
-
-
-                if rule.startswith(
-                    (
-                        "DOMAIN,",
-                        "DOMAIN-SUFFIX,",
-                        "DOMAIN-KEYWORD,"
-                    )
-                ):
-                    f.write(rule + "\n")
-
-
-        convert_source = txt_source
-        convert_format = "text"
+    convert_source = yaml_source
+    convert_format = "yaml"	
 
 
     #
