@@ -16,38 +16,57 @@ permissions:
   contents: write
 
 jobs:
-
   build:
-
     runs-on: ubuntu-latest
 
     steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-    - uses: actions/checkout@v4
+      - name: Download Mihomo
+        run: |
+          wget -O mihomo.gz https://github.com/MetaCubeX/mihomo/releases/latest/download/mihomo-linux-amd64-v1.19.29.gz
+          gunzip mihomo.gz
+          chmod +x mihomo
+          ./mihomo -v
 
+      - name: Install python deps
+        run: |
+          python3 -m pip install --upgrade pip
+          pip3 install pyyaml
 
-    - name: Download Mihomo
-      run: |
-        wget -O mihomo.gz https://github.com/MetaCubeX/mihomo/releases/latest/download/mihomo-linux-amd64-v1.19.29.gz
-        gunzip mihomo.gz
-        chmod +x mihomo
+      - name: Build
+        run: |
+          python3 scripts/build.py
 
-    - name: Install python deps
-      run: |
-        pip3 install pyyaml
+      - name: Debug
+        run: |
+          echo "===== GIT STATUS ====="
+          git status
 
-    - name: Build
-      run: |
-        python3 scripts/build.py
+          echo "===== CHANGED FILES ====="
+          git diff --name-only
 
+          echo "===== DIFF ====="
+          git diff --stat
 
-    - name: Commit
-      run: |
-        git config user.name "github-actions[bot]"
-        git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          echo "===== RULESET ====="
+          ls -lah ruleset
 
-        git add ruleset
+      - name: Commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-        git commit -m "Update mihomo rules" || exit 0
+          # Добавляем ВСЕ изменения (включая новые файлы в sources/)
+          git add -A
+          # или можно явно: git add ruleset sources/ mihomo/
 
-        git push
+          if git diff --cached --quiet; then
+            echo "No changes."
+            exit 0
+          fi
+
+          git commit -m "Update mihomo rules"
+          git push
