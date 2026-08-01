@@ -12,3 +12,6 @@ Automatically generated MRS rulesets for Mihomo / SSClash.
 - Intel
 - TikTok
 - WhatsApp
+- Telegram
+- Notion
+- Youtube
