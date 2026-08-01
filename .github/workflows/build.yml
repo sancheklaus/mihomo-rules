@@ -26,8 +26,11 @@ jobs:
 
       - name: Download Mihomo
         run: |
+          # Удаляем старые файлы, если они есть
+          rm -f mihomo mihomo.gz
+          
           wget -O mihomo.gz https://github.com/MetaCubeX/mihomo/releases/latest/download/mihomo-linux-amd64-v1.19.29.gz
-          gunzip mihomo.gz
+          gunzip -f mihomo.gz
           chmod +x mihomo
           ./mihomo -v
 
@@ -59,9 +62,8 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          # Добавляем ВСЕ изменения (включая новые файлы в sources/)
+          # Добавляем ВСЕ изменения
           git add -A
-          # или можно явно: git add ruleset sources/ mihomo/
 
           if git diff --cached --quiet; then
             echo "No changes."
