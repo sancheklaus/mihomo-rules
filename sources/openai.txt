@@ -1,5 +1,0 @@
-openai.com
-chatgpt.com
-oaistatic.com
-oaiusercontent.com
-chat.openai.com
