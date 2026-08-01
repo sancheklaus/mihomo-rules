@@ -1,183 +1,47 @@
-import json
-import os
-import subprocess
-import urllib.request
-import yaml
+jobs:
+  build:
+    runs-on: ubuntu-latest
 
+    steps:
 
-MIHOMO = "./mihomo"
+    - uses: actions/checkout@v4
 
-SOURCE_DIR = "sources"
-RULESET_DIR = "ruleset"
+    - name: Download Mihomo
+      run: |
+        wget -O mihomo.gz https://github.com/MetaCubeX/mihomo/releases/latest/download/mihomo-linux-amd64-v1.19.29.gz
+        gunzip mihomo.gz
+        chmod +x mihomo
 
+    - name: Install python deps
+      run: |
+        pip3 install pyyaml
 
-os.makedirs(SOURCE_DIR, exist_ok=True)
-os.makedirs(RULESET_DIR, exist_ok=True)
+    - name: Build
+      run: |
+        python3 scripts/build.py
 
+    # ← ВСТАВИТЬ ЗДЕСЬ
+    - name: Debug
+      run: |
+        echo "===== GIT STATUS ====="
+        git status
 
-with open(
-    "sources/providers.json",
-    encoding="utf-8"
-) as f:
-    providers = json.load(f)
+        echo "===== CHANGED FILES ====="
+        git diff --name-only
 
+        echo "===== DIFF ====="
+        git diff --stat
 
-for provider in providers:
+        echo "===== RULESET ====="
+        ls -lah ruleset
 
-    name = provider["name"]
-    behavior = provider["behavior"]
-    fmt = provider["format"]
-    url = provider["url"]
+    - name: Commit
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
+        git add ruleset
 
-    print("")
-    print("======================")
-    print(name)
-    print("======================")
+        git commit -m "Update mihomo rules" || exit 0
 
-
-    source_ext = "yaml" if fmt == "yaml" else "txt"
-
-    source = f"{SOURCE_DIR}/{name}.{source_ext}"
-    target = f"{RULESET_DIR}/{name}.mrs"
-
-
-    print("Download:")
-    print(url)
-
-
-    urllib.request.urlretrieve(
-        url,
-        source
-    )
-
-
-    convert_behavior = behavior
-    convert_format = fmt
-    convert_source = source
-
-
-    #
-    # Blackmatrix7 Clash YAML
-    #
-    if behavior == "classical" and fmt == "yaml":
-
-        print("Convert classical yaml -> domain text")
-
-
-        with open(
-            source,
-            encoding="utf-8"
-        ) as f:
-            data = yaml.safe_load(f)
-
-
-        payload = data.get(
-            "payload",
-            []
-        )
-
-
-        txt_source = (
-            f"{SOURCE_DIR}/{name}_domain.txt"
-        )
-
-
-        with open(
-            txt_source,
-            "w",
-            encoding="utf-8"
-        ) as f:
-
-            for rule in payload:
-
-                if not isinstance(rule, str):
-                    continue
-
-
-                if rule.startswith(
-                    "DOMAIN-SUFFIX,"
-                ):
-
-                    domain = rule.split(
-                        ",",
-                        1
-                    )[1]
-
-                    f.write(
-                        domain + "\n"
-                    )
-
-
-                elif rule.startswith(
-                    "DOMAIN,"
-                ):
-
-                    domain = rule.split(
-                        ",",
-                        1
-                    )[1]
-
-                    f.write(
-                        domain + "\n"
-                    )
-
-
-        convert_behavior = "domain"
-        convert_format = "text"
-        convert_source = txt_source
-
-
-    #
-    # Direct domain list
-    #
-    elif behavior == "domain":
-
-        print(
-            "Convert domain text"
-        )
-
-
-    #
-    # Direct IP list
-    #
-    elif behavior == "ipcidr":
-
-        print(
-            "Convert ipcidr text"
-        )
-
-
-    print(
-        f"Build {name}.mrs"
-    )
-
-
-    subprocess.run(
-        [
-            MIHOMO,
-            "convert-ruleset",
-            convert_behavior,
-            convert_format,
-            convert_source,
-            target
-        ],
-        check=True
-    )
-
-
-print("")
-print("Generated rules:")
-
-
-for file in sorted(
-    os.listdir(RULESET_DIR)
-):
-
-    if file.endswith(".mrs"):
-
-        print(file)
-
-
-print("")
-print("DONE")
+        git push
