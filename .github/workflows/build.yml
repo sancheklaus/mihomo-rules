@@ -1,30 +1,10 @@
-name: Build Mihomo Rules
-
-on:
-  workflow_dispatch:
-
-  push:
-    paths:
-      - "sources/**"
-      - "scripts/**"
-      - ".github/workflows/**"
-
-  schedule:
-    - cron: "0 3 * * *"
-
-permissions:
-  contents: write
-
 jobs:
-
   build:
-
     runs-on: ubuntu-latest
 
     steps:
 
     - uses: actions/checkout@v4
-
 
     - name: Download Mihomo
       run: |
@@ -40,6 +20,20 @@ jobs:
       run: |
         python3 scripts/build.py
 
+    # ← ВСТАВИТЬ ЗДЕСЬ
+    - name: Debug
+      run: |
+        echo "===== GIT STATUS ====="
+        git status
+
+        echo "===== CHANGED FILES ====="
+        git diff --name-only
+
+        echo "===== DIFF ====="
+        git diff --stat
+
+        echo "===== RULESET ====="
+        ls -lah ruleset
 
     - name: Commit
       run: |
