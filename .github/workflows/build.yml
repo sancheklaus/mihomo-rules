@@ -2,13 +2,11 @@ name: Build Mihomo Rules
 
 on:
   workflow_dispatch:
-
   push:
     paths:
       - "sources/**"
       - "scripts/**"
       - ".github/workflows/**"
-
   schedule:
     - cron: "0 3 * * *"
 
@@ -26,9 +24,7 @@ jobs:
 
       - name: Download Mihomo
         run: |
-          # Удаляем старые файлы, если они есть
           rm -f mihomo mihomo.gz
-          
           wget -O mihomo.gz https://github.com/MetaCubeX/mihomo/releases/latest/download/mihomo-linux-amd64-v1.19.29.gz
           gunzip -f mihomo.gz
           chmod +x mihomo
@@ -39,6 +35,11 @@ jobs:
           python3 -m pip install --upgrade pip
           pip3 install pyyaml
 
+      - name: Clean sources (force fresh download)
+        run: |
+          # Удаляем старые источники, чтобы скрипт скачал свежие
+          rm -rf sources/*.yaml sources/*.txt 2>/dev/null || true
+
       - name: Build
         run: |
           python3 scripts/build.py
@@ -47,28 +48,23 @@ jobs:
         run: |
           echo "===== GIT STATUS ====="
           git status
-
           echo "===== CHANGED FILES ====="
           git diff --name-only
-
-          echo "===== DIFF ====="
-          git diff --stat
-
-          echo "===== RULESET ====="
-          ls -lah ruleset
+          echo "===== RULESET FILES ====="
+          ls -la ruleset/ || echo "No ruleset folder"
 
       - name: Commit
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          # Добавляем ВСЕ изменения
           git add -A
 
           if git diff --cached --quiet; then
-            echo "No changes."
-            exit 0
+            echo "No content changes. Creating empty commit to update timestamp..."
+            git commit --allow-empty -m "Update mihomo rules [skip ci]"
+          else
+            git commit -m "Update mihomo rules"
           fi
 
-          git commit -m "Update mihomo rules"
           git push
