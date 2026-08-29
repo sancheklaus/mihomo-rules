@@ -1,4 +1,3 @@
-```yaml
 name: Build Mihomo Rules
 
 on:
@@ -159,4 +158,3 @@ jobs:
           fi
 
           git push
-```
